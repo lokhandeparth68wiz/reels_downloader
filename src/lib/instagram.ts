@@ -1,9 +1,4 @@
-import { exec } from "child_process";
-import { promisify } from "util";
-import fs from "fs";
-import path from "path";
-
-const execAsync = promisify(exec);
+import axios from "axios";
 
 export interface VideoFormat {
   url: string;
@@ -36,54 +31,73 @@ export async function extractVideoInfo(url: string): Promise<VideoInfo> {
     throw new Error("Invalid Instagram URL");
   }
 
-  const ytDlpPath = process.env.YT_DLP_PATH || "yt-dlp";
+  const apiKey = process.env.RAPIDAPI_KEY;
+  const apiHost = process.env.RAPIDAPI_HOST || "instagram-scraper-api2.p.rapidapi.com";
   
-  // Check if cookies.txt exists in the root directory
-  const rootDir = process.cwd();
-  const cookiesPath = path.join(rootDir, "cookies.txt");
-  let cookieArg = "";
-  if (fs.existsSync(cookiesPath)) {
-    cookieArg = `--cookies "${cookiesPath}"`;
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please add RAPIDAPI_KEY to your environment variables.");
   }
-  
+
   try {
-    // -j outputs the JSON info dictionary
-    const { stdout } = await execAsync(`"${ytDlpPath}" ${cookieArg} -j "${url}"`);
-    const data = JSON.parse(stdout);
+    // We are using the "Instagram Scraper API" from RapidAPI
+    // which bypasses Instagram login walls to reliably fetch media.
+    const options = {
+      method: "GET",
+      url: `https://${apiHost}/v1.2/info`,
+      params: { url_embed: url },
+      headers: {
+        "x-rapidapi-key": apiKey,
+        "x-rapidapi-host": apiHost,
+      },
+    };
 
-    const formats = (data.formats || [])
-      .filter((f: any) => f.ext === "mp4" && f.vcodec !== "none")
-      .map((f: any) => ({
-        url: f.url,
-        format_id: f.format_id,
-        ext: f.ext,
-        resolution: f.resolution || `${f.width}x${f.height}`,
-        width: f.width || null,
-        height: f.height || null,
-        vcodec: f.vcodec || "unknown",
-        acodec: f.acodec || "unknown",
-        filesize: f.filesize || f.filesize_approx || undefined,
-      }));
+    const response = await axios.request(options);
+    const data = response.data.data;
+    
+    if (!data || !data.items || data.items.length === 0) {
+       throw new Error("Instagram private video or blocked URL.");
+    }
+    
+    // Most reels/videos are the first item
+    const item = data.items[0];
+    
+    // Extract video versions (resolutions)
+    const formats = (item.video_versions || []).map((v: any, index: number) => ({
+        url: v.url,
+        format_id: v.id || `format-${index}`,
+        ext: "mp4",
+        resolution: `${v.width}x${v.height}`,
+        width: v.width,
+        height: v.height,
+        vcodec: "h264",
+        acodec: "aac"
+    }));
 
-    // Sort formats by highest resolution width
+    // Sort formats to have the highest resolution first
     formats.sort((a: VideoFormat, b: VideoFormat) => {
       if (a.width && b.width) return b.width - a.width;
       return 0;
     });
 
     return {
-      id: data.id,
-      title: data.title || "Instagram Reel",
-      thumbnail: data.thumbnail || "",
-      duration: data.duration || 0,
-      extractor: data.extractor,
+      id: item.id || String(Date.now()),
+      title: item.caption?.text || "Instagram Reel",
+      thumbnail: item.image_versions2?.candidates?.[0]?.url || "",
+      duration: item.video_duration || 0,
+      extractor: "Instagram API",
       formats,
     };
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            throw new Error("Unauthorized RapidAPI key. Please check your RAPIDAPI_KEY.");
+        }
+        if (error.response?.status === 429) {
+             throw new Error("API Rate limit exceeded. Please upgrade your RapidAPI plan.");
+        }
+    }
+    
     if (error instanceof Error) {
-      if (error.message.includes("Instagram API is not granting access") || error.message.includes("Instagram sent an empty media")) {
-        throw new Error("Instagram is blocking access. You must provide a valid cookies.txt file to authenticate.");
-      }
       throw new Error(`Failed to extract video: ${error.message}`);
     }
     throw new Error("Failed to extract video: Unknown error");
