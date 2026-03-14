@@ -9,8 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "axios": "^1.13.6",
     "framer-motion": "^12.36.0",
+    "instagram-url-direct": "^2.0.7",
     "lucide-react": "^0.577.0",
+    "nayan-media-downloader": "^0.0.1-security",
     "next": "16.1.6",
     "next-themes": "^0.4.6",
     "react": "19.2.3",
