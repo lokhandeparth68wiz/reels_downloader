@@ -43,7 +43,11 @@ export default function UrlInput({ onExtractionSuccess }: UrlInputProps) {
     setIsLoading(true);
     
     try {
-      const res = await fetch("/api/extract", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/extract` 
+        : "/api/extract";
+
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: inputUrl }),
