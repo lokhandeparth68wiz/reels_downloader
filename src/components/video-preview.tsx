@@ -59,7 +59,7 @@ export default function VideoPreview({ video, onReset }: VideoPreviewProps) {
       <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
         
         {/* Thumbnail/Player Section */}
-        <div className="w-full md:w-5/12 aspect-[9/16] max-h-[500px] bg-black/10 rounded-2xl overflow-hidden relative shadow-inner flex-shrink-0">
+        <div className="w-full md:w-5/12 aspect-9/16 max-h-[500px] bg-black/10 rounded-2xl overflow-hidden relative shadow-inner shrink-0">
           {video.thumbnail ? (
             <img 
               src={video.thumbnail} 

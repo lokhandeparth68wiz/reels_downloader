@@ -19,7 +19,7 @@ export default function Header() {
             <div className="bg-primary/10 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
               <Download className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+            <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/70">
               ReelGetter
             </span>
           </Link>

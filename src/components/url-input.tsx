@@ -75,7 +75,7 @@ export default function UrlInput({ onExtractionSuccess }: UrlInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto relative group">
-      <div className="absolute -inset-1 bg-gradient-to-r from-primary to-rose-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+      <div className="absolute -inset-1 bg-linear-to-r from-primary to-rose-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
       
       <div className="relative flex items-center bg-card rounded-2xl p-2 border border-border shadow-xl glass transition-all duration-300">
         <div className="pl-4 text-muted-foreground">
